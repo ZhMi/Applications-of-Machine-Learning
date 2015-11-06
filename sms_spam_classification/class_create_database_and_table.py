@@ -103,15 +103,16 @@ class createDatabaseTable(object):
                                 UNIQUE (word))""" % table_name_list[1])
 
         try:
+            '''
             for i in xrange(len(sqls)):
                 cursor.execute(sqls[i])
             logging.info("create table successfully")
+            '''
+            map(cursor.execute, sqls)
         except Exception, ex:
             print Exception, "fail to create table", ex
         finally:
             pass
-
-
 
     def close_database(self):
         cursor = self.conn.cursor()
@@ -122,12 +123,14 @@ class createDatabaseTable(object):
 
 ####################################### Part4 : Test  ##################################################################
 
-name = "spm_message_information_DB"
-table_list = ['message_information','word_infomation']
+name = "sms_spam_classification_DB"
+table_list = ['message_data_information','word_infomation']
 Creater = createDatabaseTable()
 Creater.connectMysql()
 Creater.createDatebase(database_name = name)
 Creater.createTable(database_name = name, table_name_list = table_list)
+Creater.close_database()
+
 
 
 
