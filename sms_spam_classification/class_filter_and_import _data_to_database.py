@@ -30,8 +30,9 @@ class filterDataFun(object):
         self.data_file_dir = source_data_file_dir
         self.raw_list = []
         logging.info("finish initializing member : %s and raw_list" %source_data_file_dir)
+        self.filtered_list = []
 
-    def filterSpecialSymbol(self,line):
+    def filterSpecialSymbo(self, line):
         # filter '\n','\t' at the begin and end of a line
         line = line.decode('utf-8')
         line = line.strip()
@@ -59,8 +60,19 @@ class filterDataFun(object):
             logging.info("finish reading data with readline()")
         finally:
             fp.close()
-        map(self.filterSpecialSymbol, self.raw_list)
+        map(self.filterSpecialSymbo, self.raw_list)
         return self.raw_list
+
+    def seprateLineBySpecialSymbol(self, line):
+        line = line.split('\t')
+        return line
+
+    def seprateLine(self):
+        logging.info("""begin to seprate every line into three parts : id,flag,contentsby by symbol '\t' """)
+        # self.filtered_list = map(self.seprateLineBySpecialSymbol, self.raw_list)
+        self.filtered_list = map(self.seprateLineBySpecialSymbol, self.raw_list[0:10]) # text version
+        logging.info("finish seprating.seprate results stores in the list %s " %self.filtered_list)
+        return self.filtered_list
 
 ####################################### Part3 :Test ####################################################################
 
@@ -68,7 +80,18 @@ data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
 
 testObject = filterDataFun(data_file_dir)
 testObject.__init__(data_file_dir)
-data_list = testObject.readFile()
+raw_data_list = testObject.readFile()
+
 print "length of raw data list : %s" %list
-for i in xrange(len(data_list)):
-    print i ,":", data_list[i]
+
+for i in xrange(10):
+    print raw_data_list[i]
+    print raw_data_list[i].split("\t")
+    print raw_data_list[i]
+
+filter_data_list = testObject.seprateLine()
+
+print "length of list after filtered :%s"%len(filter_data_list)
+for i in xrange(len(filter_data_list)):
+    print  filter_data_list[i][0], "*", filter_data_list[i][1], "**", filter_data_list[i][2]
+
