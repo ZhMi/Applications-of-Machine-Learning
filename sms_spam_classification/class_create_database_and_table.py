@@ -10,31 +10,23 @@
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-3
-# Recent-changes:  2015-11-4
+# Recent-changes:  2015-11-7
 
 ####################################### Part1 : Import  ################################################################
 
 import logging
 import MySQLdb
-
-####################################### Part2 : Config logging  ########################################################
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='./main.log',
-                    filemode='w')
-
-console = logging.StreamHandler()
-console.setLevel(logging.INFO) # 设置日志打印格式
-
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-console.setFormatter(formatter) # 将定义好的console日志handler添加到root logger
-logging.getLogger('').addHandler(console)
+from class_config_logging import packageLogging
 
 ####################################### Part3 : Create database and table  #############################################
 
 class createDatabaseTable(object):
+
+    def __init__(self):
+        # config logging
+        loggingConfigClass = packageLogging()
+        loggingConfigClass.__init__()
+        loggingConfigClass.configLoggingFun()
 
     def connectMysql(self):
         try:

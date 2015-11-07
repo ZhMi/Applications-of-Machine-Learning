@@ -9,32 +9,23 @@
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-6
-# Recent-changes:
+# Recent-changes:  2015-11-7
 
 ####################################### Part1 : Import  ################################################################
 
 import logging
+from class_config_logging import packageLogging
 
-####################################### Part2 : Config logging #########################################################
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                    datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='./main.log',
-                    filemode='w')
-
-console = logging.StreamHandler()
-console.setLevel(logging.INFO) # 设置日志打印格式
-
-formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-console.setFormatter(formatter) # 将定义好的console日志handler添加到root logger
-logging.getLogger('').addHandler(console)
-
-####################################### Part3 : filter raw data ########################################################
+####################################### Part2 : filter raw data ########################################################
 
 class filterDataFun(object):
 
     def __init__(self, source_data_file_dir):
+        # config logging
+        loggingConfigClass = packageLogging()
+        loggingConfigClass.__init__()
+        loggingConfigClass.configLoggingFun()
+
         logging.info("start to initialize member : %s " %source_data_file_dir)
         self.data_file_dir = source_data_file_dir
         self.raw_list = []
@@ -47,9 +38,11 @@ class filterDataFun(object):
         return line
 
     def readFile(self):
+
         logging.info("open file dir: %s " %self.data_file_dir)
         fp = open(self.data_file_dir)
         # data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
+
         try:
             logging.info("read data with readlines()")
             self.raw_list = fp.readlines()
@@ -68,7 +61,8 @@ class filterDataFun(object):
             fp.close()
         map(self.filterSpecialSymbol, self.raw_list)
         return self.raw_list
-####################################### Part4 :Test ####################################################################
+
+####################################### Part3 :Test ####################################################################
 
 data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
 
