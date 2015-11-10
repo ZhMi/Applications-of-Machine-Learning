@@ -5,27 +5,25 @@
 
 # Filename:        filter_and_import_data_to_database.py
 # Description:     filter the raw data and import the separated data to the fields of tables in the database
-#
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-6
-# Recent-changes:  2015-11-7
+# Recent-changes:  2015-11-10
 
 ####################################### Part1 : Import  ################################################################
 
 import logging
 from class_config_logging import packageLogging
+from pyspark import SparkContext
 
 ####################################### Part2 : filter raw data ########################################################
 
 class filterDataFun(object):
 
     def __init__(self, source_data_file_dir):
-        # config logging
         loggingConfigClass = packageLogging()
         loggingConfigClass.__init__()
         loggingConfigClass.configLoggingFun()
-
         logging.info("start to initialize member : %s " %source_data_file_dir)
         self.data_file_dir = source_data_file_dir
         self.raw_list = []
@@ -39,10 +37,8 @@ class filterDataFun(object):
         return line
 
     def readFile(self):
-
         logging.info("open file dir: %s " %self.data_file_dir)
-        fp = open(self.data_file_dir)
-        # data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
+        fp = open(self.data_file_dir) # data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
 
         try:
             logging.info("read data with readlines()")
@@ -68,11 +64,22 @@ class filterDataFun(object):
         return line
 
     def seprateLine(self):
-        logging.info("""begin to seprate every line into three parts : id,flag,contentsby by symbol '\t' """)
-        # self.filtered_list = map(self.seprateLineBySpecialSymbol, self.raw_list)
-        self.filtered_list = map(self.seprateLineBySpecialSymbol, self.raw_list[0:10]) # text version
-        logging.info("finish seprating.seprate results stores in the list %s " %self.filtered_list)
-        return self.filtered_list
+
+        logging.info("begin to create SparkContext sc")
+        self.sc = SparkContext("local", "test")
+        logging.info("finish creating sc")
+        logging.info("begin to create spark rdd rdd_raw_list,rdd_rawlist has the same element as list raw_list")
+        rdd_raw_list = self.sc.parallelize(self.raw_list)
+        logging.info("finish creating spark rdd rdd_raw_list,rdd_raw_list has the same element as list raw_list")
+        logging.info("""each element of rdd_raw_list is a line of train_data,begin to seprate every line into three \
+                     parts : id,flag,contentsby by symbol '\t' """)
+        rdd_filtered_list = rdd_raw_list.map(lambda x: x.split("\t"))
+        return rdd_filtered_list
+
+    def stop(self):
+        self.sc.stop()
+        logging.info("shutdown hook")
+
 
 ####################################### Part3 :Test ####################################################################
 
@@ -81,17 +88,11 @@ data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
 testObject = filterDataFun(data_file_dir)
 testObject.__init__(data_file_dir)
 raw_data_list = testObject.readFile()
+rdd_filtered_list = testObject.seprateLine()
+list = rdd_filtered_list.collect()
+testObject.stop()
 
-print "length of raw data list : %s" %list
-
-for i in xrange(10):
-    print raw_data_list[i]
-    print raw_data_list[i].split("\t")
-    print raw_data_list[i]
-
-filter_data_list = testObject.seprateLine()
-
-print "length of list after filtered :%s"%len(filter_data_list)
-for i in xrange(len(filter_data_list)):
-    print  filter_data_list[i][0], "*", filter_data_list[i][1], "**", filter_data_list[i][2]
+print "length of rdd_raw_list : ", len(list)
+for i in xrange(100):
+    print "*", list[i][0], "**", list[i][1], "***", list[i][2]
 
