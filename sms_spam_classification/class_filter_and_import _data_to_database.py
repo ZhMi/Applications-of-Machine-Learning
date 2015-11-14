@@ -15,6 +15,7 @@
 import logging
 from class_config_logging import packageLogging
 from pyspark import SparkContext
+import jieba
 
 ####################################### Part2 : filter raw data ########################################################
 
@@ -26,55 +27,38 @@ class filterDataFun(object):
         loggingConfigClass.configLoggingFun()
         logging.info("start to initialize member : %s " %source_data_file_dir)
         self.data_file_dir = source_data_file_dir
-        self.raw_list = []
         logging.info("finish initializing member : %s and raw_list" %source_data_file_dir)
         self.filtered_list = []
 
-    def filterSpecialSymbo(self, line):
-        # filter '\n','\t' at the begin and end of a line
-        line = line.decode('utf-8')
-        line = line.strip()
-        return line
-
     def readFile(self):
-        logging.info("open file dir: %s " %self.data_file_dir)
-        fp = open(self.data_file_dir) # data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
-
-        try:
-            logging.info("read data with readlines()")
-            self.raw_list = fp.readlines()
-            logging.info("finish reading data with readlines()")
-        except Exception, ex:
-            logging.info("fail to read data with readlines()")
-            print Exception, "fp.readlines() error.", ex
-            logging.info("start to read data with readline()")
-            line = fp.readline()
-            while line:
-                line = line.strip()
-                self.raw_list.append(line)
-                line = fp.readline()
-            logging.info("finish reading data with readline()")
-        finally:
-            fp.close()
-        map(self.filterSpecialSymbo, self.raw_list)
-        return self.raw_list
+        self.sc = SparkContext("local", "test")
+        self.rdd_raw_File = self.sc\
+                            .textFile(self.data_file_dir) \
+                            .map(lambda x: x.strip())
+        return self.rdd_raw_File
 
     def seprateLine(self):
-        logging.info("begin to create SparkContext sc")
-        self.sc = SparkContext("local", "test")
-        logging.info("finish creating sc")
-        logging.info("begin to create spark rdd rdd_raw_list,rdd_rawlist has the same element as list raw_list")
-        self.rdd_raw_list = self.sc.parallelize(self.raw_list)
-        logging.info("finish creating spark rdd rdd_raw_list,rdd_raw_list has the same element as list raw_list")
-        logging.info("""each element of rdd_raw_list is a line of train_data,begin to seprate every line into three \
-                     parts : id,flag,contentsby by symbol '\t' """)
-        rdd_filtered_list = self.rdd_raw_list.map(lambda x: x.split("\t"))
+        self.rdd_raw_message_name_list = ['rdd_raw_list_one',
+                                     'rdd_raw_list_two',
+                                     'rdd_raw_list_three',
+                                     'rdd_raw_list_four',
+                                     'rdd_raw_list_five',
+                                     'rdd_raw_list_six',
+                                     'rdd_raw_list_seven',
+                                     'rdd_raw_list_eight']
+        self.rdd_raw_message_dict = {}
+        for i in xrange(len(self.rdd_raw_message_name_list)):
+            self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]] \
+                = self.sc \
+                      .parallelize(self.rdd_raw_File.collect()[100000*i:100000*(i+1)]) \
+                      .map(lambda x: (x.split("\t"), list(jieba.cut(x[4:]))))
 
-        self.rdd_content_list = self.rdd_raw_list.map(lambda x: x[4:])
-        return rdd_filtered_list
+            # create eight rdds of rdd_raw_list , every rdd contains 100,000 pieces of massage
+        logging.info("create dict rdd_raw_message_dict, key is name = rdd ,value is rdd content")
+        return self.rdd_raw_message_dict
 
-    def getContent(self):
-        return self.rdd_content_list
+    def getDictKey(self):
+        return self.rdd_raw_message_name_list
 
     def stop(self):
         self.sc.stop()
@@ -88,19 +72,21 @@ data_file_dir = "../sms_spam_classification/source_data/train_data.txt"
 testObject = filterDataFun(data_file_dir)
 testObject.__init__(data_file_dir)
 raw_data_list = testObject.readFile()
-rdd_filtered_list = testObject.seprateLine()
-rdd_content_list = testObject.getContent()
-list1 = rdd_filtered_list.collect()
 
-print "length of rdd_raw_list : ", len(list1)
-for i in xrange(10):
-    print "*", list1[i][0], "**", list1[i][1], "***", list1[i][2]
+rdd_raw_message_dict = testObject.seprateLine()
 
+#[text : create eight rdd of raw data]
 
-list2 = rdd_content_list.collect()
+key_list = testObject.getDictKey()
 
-print "length of rdd_content_list : ", len(list2)
-for i in xrange(10):
-    print list2[i]
+for i in xrange(len(key_list)):
+    temp_list = rdd_raw_message_dict[key_list[i]].collect()
+    print "id", i, "***", "length :", len(temp_list)
+    print "elem of head list:"
+    for k in temp_list[0:5]:
+        print k
+    print "elem of tail list:"
+    for k in temp_list[-1:-6:-1]:
+        print k
 
 testObject.stop()
