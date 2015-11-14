@@ -8,14 +8,13 @@
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-6
-# Recent-changes:  2015-11-10
+# Recent-changes:  2015-11-12
 
 ####################################### Part1 : Import  ################################################################
 
 import logging
 from class_config_logging import packageLogging
 from pyspark import SparkContext
-import jieba
 
 ####################################### Part2 : filter raw data ########################################################
 
@@ -60,35 +59,27 @@ class filterDataFun(object):
         map(self.filterSpecialSymbo, self.raw_list)
         return self.raw_list
 
-    def seprateLineBySpecialSymbol(self, line):
-        line = line.split('\t')
-        return line
-
     def seprateLine(self):
-
         logging.info("begin to create SparkContext sc")
         self.sc = SparkContext("local", "test")
         logging.info("finish creating sc")
         logging.info("begin to create spark rdd rdd_raw_list,rdd_rawlist has the same element as list raw_list")
-        rdd_raw_list = self.sc.parallelize(self.raw_list)
+        self.rdd_raw_list = self.sc.parallelize(self.raw_list)
         logging.info("finish creating spark rdd rdd_raw_list,rdd_raw_list has the same element as list raw_list")
         logging.info("""each element of rdd_raw_list is a line of train_data,begin to seprate every line into three \
                      parts : id,flag,contentsby by symbol '\t' """)
-        self.rdd_filtered_list = rdd_raw_list.map(lambda x: x.split("\t"))
-        return self.rdd_filtered_list
+        rdd_filtered_list = self.rdd_raw_list.map(lambda x: x.split("\t"))
 
-    def cutWordOfLine(message):
-        content = message[2]
-        word_list = [i for i in jieba.cut(content, cut_all=True)]
-        return word_list
+        self.rdd_content_list = self.rdd_raw_list.map(lambda x: x[4:])
+        return rdd_filtered_list
 
-    def cutWordOfRdd(self):
-        rdd_word_list_of_line = self.rdd_filtered_list.map(self.cutWordOfLine)
-        print "type of rdd_word_list_of_line:", type(rdd_word_list_of_line)
-        return rdd_word_list_of_line
+    def getContent(self):
+        return self.rdd_content_list
 
     def stop(self):
         self.sc.stop()
+        logging.info("shutdown hook")
+
 
 ####################################### Part3 :Test ####################################################################
 
@@ -98,18 +89,18 @@ testObject = filterDataFun(data_file_dir)
 testObject.__init__(data_file_dir)
 raw_data_list = testObject.readFile()
 rdd_filtered_list = testObject.seprateLine()
+rdd_content_list = testObject.getContent()
+list1 = rdd_filtered_list.collect()
 
-list = rdd_filtered_list.collect()
+print "length of rdd_raw_list : ", len(list1)
+for i in xrange(10):
+    print "*", list1[i][0], "**", list1[i][1], "***", list1[i][2]
+
+
+list2 = rdd_content_list.collect()
+
+print "length of rdd_content_list : ", len(list2)
+for i in xrange(10):
+    print list2[i]
 
 testObject.stop()
-
-print "length of rdd_raw_list : ", len(list)
-for i in xrange(10):
-    print list[i][0],"***",list[i][1],"****",list[i][2]
-
-rdd_cut_word_of_line_list = testObject.cutWordOfRdd()
-list_cut_word_list = rdd_cut_word_of_line_list.value
-'''
-for i in xrange(10):
-    print list_cut_word_list[i][0], "***", list_cut_word_list[i][1], "****", list_cut_word_list[i][2]
-'''
