@@ -8,7 +8,7 @@
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-6
-# Recent-changes:  2015-11-12
+# Recent-changes:  2015-11-16
 
 ####################################### Part1 : Import  ################################################################
 
@@ -40,15 +40,19 @@ class filterDataFun(object):
 
     def seprateLine(self):
         self.rdd_raw_message_name_list = ['rdd_raw_list_one',
-                                     'rdd_raw_list_two',
-                                     'rdd_raw_list_three',
-                                     'rdd_raw_list_four',
-                                     'rdd_raw_list_five',
-                                     'rdd_raw_list_six',
-                                     'rdd_raw_list_seven',
-                                     'rdd_raw_list_eight']
+                                          'rdd_raw_list_two',
+                                          'rdd_raw_list_three',
+                                          'rdd_raw_list_four',
+                                          'rdd_raw_list_five',
+                                          'rdd_raw_list_six',
+                                          'rdd_raw_list_seven',
+                                          'rdd_raw_list_eight']
 
         self.rdd_raw_message_dict = {}
+        self.rdd_message_content_dict = {}
+        self.rdd_cut_word_dict = {}
+        self.rdd_cut_word_count_dict = {}
+
         for i in xrange(len(self.rdd_raw_message_name_list)):
             sequence = self.raw_File_list[100000*i:100000*(i+1)]
             self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]] \
@@ -56,18 +60,68 @@ class filterDataFun(object):
                       .parallelize(sequence) \
                       .map(lambda x: [x.split("\t")])
 
-            # self.rdd_message_content = self.rdd_raw_File.map(lambda x: x[4:])
-            # self.rdd_cut_word_list = self.rdd_message_content.map(lambda x: list(jieba(x)))
-            # test version
-            self.rdd_message_content = self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]] \
-                                           .map(lambda x: x[0][-1:-2:-1])
+            # test part
+            '''
+            temp_list = self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of rdd_raw_message_list :", len(temp_list)
 
-            # if I write last  sentence as map(lambda x: x[2]) ,there will be an error
+            print "head of list:"
+            for k in temp_list[0:5]:
+                print k[0][0], "**", k[0][1], "***", k[0][2], "****"
+            print "elem of tail list:"
+            for k in temp_list[-1:-6:-1]:
+                print k[0][0], "**", k[0][1], "***", k[0][2], "****"
+            '''
 
-            self.rdd_cut_word_list = self.rdd_message_content.map(lambda x: [ i for i in jieba.cut(x[0])])
-            # list(jieba.cut(message)
-            self.rdd_cut_word_count_list = self.rdd_cut_word_list.map(lambda x: len(x))
-            # create eight rdds of rdd_raw_list , every rdd contains 100,000 pieces of massage
+            self.rdd_message_content_dict[self.rdd_raw_message_name_list[i]] \
+                = self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]] \
+                      .map(lambda x: x[0][-1:-2:-1])
+
+            '''
+            temp_list = self.rdd_message_content_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of rdd_raw_message_list :", len(temp_list)
+
+            print "head of list:"
+            for k in temp_list[0:5]:
+                print k[0]
+            print "elem of tail list:"
+            for k in temp_list[-1:-6:-1]:
+                print k[0]
+            '''
+
+            self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]] \
+                = self.rdd_message_content_dict[self.rdd_raw_message_name_list[i]]\
+                      .map(lambda x: list(jieba.cut(x[0])))
+
+            '''
+            temp_list = self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of rdd_raw_message_list :", len(temp_list)
+
+            print "head of list:"
+            for k in temp_list[0:5]:
+                for q in k:
+                    print q
+            print "elem of tail list:"
+            for k in temp_list[-1:-6:-1]:
+                for q in k:
+                    print q
+
+            '''
+            self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]] \
+                = self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]] \
+                      .map(lambda x: len(x))
+            '''
+            temp_list = self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of rdd_raw_message_list :", len(temp_list)
+
+            print "head of list:"
+            for k in temp_list[0:5]:
+                print k
+            print "elem of tail list:"
+            for k in temp_list[-1:-6:-1]:
+                print k
+            '''
+
         logging.info("create dict rdd_raw_message_dict, key is name = rdd ,value is rdd content")
         return self.rdd_raw_message_dict
 
@@ -75,15 +129,14 @@ class filterDataFun(object):
         return self.rdd_raw_message_name_list
 
     def getCutWord(self):
-        return self.rdd_cut_word_list
+        return self.rdd_cut_word_dict
 
     def getCutWordCount(self):
-        return self.rdd_cut_word_list
+        return self.rdd_cut_word_count_dict
 
     def stop(self):
         self.sc.stop()
         logging.info("shutdown hook")
-
 
 ####################################### Part3 :Test ####################################################################
 
@@ -94,6 +147,8 @@ testObject.__init__(data_file_dir)
 raw_data_list = testObject.readFile()
 
 rdd_raw_message_dict = testObject.seprateLine()
+rdd_cut_word_dict = testObject.getCutWord()
+rdd_cut_word_count_dict = testObject.getCutWordCount()
 
 # [text : create eight rdd of raw data]
 
@@ -109,33 +164,33 @@ for i in xrange(len(key_list)):
     for k in temp_list[-1:-6:-1]:
         print k[0][0], "**", k[0][1], "***", k[0][2], "****"
 
-# [test word cut function]
+# [test get cut words  of message]
 
-word_cut_list = testObject.getCutWord().collect()
-print "length of word_cut_count_list: ", len(word_cut_list)
+    temp_list_2 = rdd_cut_word_dict[key_list[i]].collect()
+    print "length of rdd_raw_message_list :", len(temp_list_2)
+    print "head of list:"
+    for k in temp_list_2[0:5]:
+        for q in k:
+            print q
+    print "****************************"
+    print "elem of tail list:"
+    for k in temp_list_2[-1:-6:-1]:
+        for q in k:
+            print q
+    print "****************************"
 
-print "elem of head list:"
+# [test get cut words length of message]
 
+    temp_list_3 = rdd_cut_word_count_dict[key_list[i]].collect()
+    print "length of rdd_raw_message_list :", len(temp_list_3)
+    print "head of list:"
+    for k in temp_list_3[0:5]:
+        print k
+    print "****************************"
+    print "elem of tail list:"
+    for k in temp_list_3[-1:-6:-1]:
+        print k
+    print "****************************"
 
-for k in word_cut_list[0:5]:
-    for q in k:
-        print q
-    print("********************")
-print "elem of tail list:"
-for k in word_cut_list[-1:-6:-1]:
-    for q in k:
-        print q
-    print("********************")
-# [test word cut numbers count part ]
-
-word_cut_count_list = testObject.getCutWordCount().collect()
-print "length of word_cut_count_list: ", len(word_cut_count_list)
-
-print "elem of head list:"
-for k in word_cut_count_list[0:5]:
-    print k
-print "elem of tail list:"
-for k in word_cut_count_list[-1:-6:-1]:
-    print k
 
 testObject.stop()
