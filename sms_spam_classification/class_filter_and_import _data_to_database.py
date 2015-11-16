@@ -101,7 +101,6 @@ rdd_cut_word_dict = testObject.getCutWord()
 rdd_cut_word_count_dict = testObject.getCutWordCount()
 
 # [text : create eight rdd of raw data]
-
 key_list = testObject.getDictKey()
 
 for i in xrange(len(key_list)):
@@ -115,7 +114,6 @@ for i in xrange(len(key_list)):
         print k[0][0], "**", k[0][1], "***", k[0][2], "****"
 
 # [test get cut words  of message]
-
     temp_list_2 = rdd_cut_word_dict[key_list[i]].collect()
     print "length of rdd_raw_message_list :", len(temp_list_2)
     print "head of list:"
@@ -130,7 +128,6 @@ for i in xrange(len(key_list)):
     print "****************************"
 
 # [test get cut words length of message function]
-
     temp_list_3 = rdd_cut_word_count_dict[key_list[i]].collect()
     print "length of rdd_raw_message_list :", len(temp_list_3)
     print "head of list:"
@@ -141,5 +138,4 @@ for i in xrange(len(key_list)):
     for k in temp_list_3[-1:-6:-1]:
         print k
     print "****************************"
-
 testObject.stop()
