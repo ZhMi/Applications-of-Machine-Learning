@@ -103,24 +103,24 @@ class filterDataFun(object):
         for i in xrange(len(self.rdd_raw_message_name_list)):
             data_list = self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]].collect()
             self.id[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][0], data_list)
-            self.is_spam[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][1], data_list)
-            self.content[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][2], data_list)
-            self.cut_word[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_dict[self.self.rdd_raw_message_name_list[i]].collect()
-            self.cut_word_count[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]].collect()
 
             print "length of id set : ", len(self.id[self.rdd_raw_message_name_list[i]])
             print self.id[self.rdd_raw_message_name_list[i]][-1]
 
+            self.is_spam[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][1], data_list)
             print "length of is_spam set : ", len(self.is_spam[self.rdd_raw_message_name_list[i]])
             print self.is_spam[self.rdd_raw_message_name_list[i]][-1]
 
-            print "length of content set : ", len(self.content[self.rdd_raw_message_name_list[i]][-1])
+            self.content[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][2], data_list)
+            print "length of content set : ", len(self.content[self.rdd_raw_message_name_list[i]])
             print self.content[self.rdd_raw_message_name_list[i]][-1]
 
-            print "length of cut word  set : ", len(self.cut_word[self.rdd_raw_message_name_list[i]][-1])
+            self.cut_word[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of cut word  set : ", len(self.cut_word[self.rdd_raw_message_name_list[i]])
             print self.cut_word[self.rdd_raw_message_name_list[i]][-1]
 
-            print "length of cut word  length set : ", len(self.cut_word_count[self.rdd_raw_message_name_list[i]][-1])
+            self.cut_word_count[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]].collect()
+            print "length of cut word  length set : ", len(self.cut_word_count[self.rdd_raw_message_name_list[i]])
             print self.cut_word_count[self.rdd_raw_message_name_list[i]][-1]
 
 
