@@ -8,7 +8,7 @@
 # Author:          zhmi
 # E-mail:          zhmi120@sina.com
 # Create:          2015-11-6
-# Recent-changes:  2015-11-16
+# Recent-changes:  2015-11-17
 
 ####################################### Part1 : Import  ################################################################
 
@@ -68,9 +68,14 @@ class filterDataFun(object):
                 = self.rdd_message_content_dict[self.rdd_raw_message_name_list[i]]\
                       .map(lambda x: list(jieba.cut(x[0])))
 
+
             self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]] \
                 = self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]] \
                       .map(lambda x: len(x))
+
+            self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]] \
+                = self.rdd_cut_word_dict[self.rdd_raw_message_name_list[i]] \
+                      .map(lambda x: "////".join(x))
 
         logging.info("create dict rdd_raw_message_dict, key is name = rdd ,value is rdd content")
         return self.rdd_raw_message_dict
@@ -87,6 +92,37 @@ class filterDataFun(object):
     def stop(self):
         self.sc.stop()
         logging.info("shutdown hook")
+
+    def getRecordSQL(self):
+        self.data_record = {}
+        self.id = {}
+        self.is_spam = {}
+        self.content = {}
+        self.cut_word = {}
+        self.cut_word_count = {}
+        for i in xrange(len(self.rdd_raw_message_name_list)):
+            data_list = self.rdd_raw_message_dict[self.rdd_raw_message_name_list[i]].collect()
+            self.id[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][0], data_list)
+            self.is_spam[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][1], data_list)
+            self.content[self.rdd_raw_message_name_list[i]] = map(lambda x: x[0][2], data_list)
+            self.cut_word[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_dict[self.self.rdd_raw_message_name_list[i]].collect()
+            self.cut_word_count[self.rdd_raw_message_name_list[i]] = self.rdd_cut_word_count_dict[self.rdd_raw_message_name_list[i]].collect()
+
+            print "length of id set : ", len(self.id[self.rdd_raw_message_name_list[i]])
+            print self.id[self.rdd_raw_message_name_list[i]][-1]
+
+            print "length of is_spam set : ", len(self.is_spam[self.rdd_raw_message_name_list[i]])
+            print self.is_spam[self.rdd_raw_message_name_list[i]][-1]
+
+            print "length of content set : ", len(self.content[self.rdd_raw_message_name_list[i]][-1])
+            print self.content[self.rdd_raw_message_name_list[i]][-1]
+
+            print "length of cut word  set : ", len(self.cut_word[self.rdd_raw_message_name_list[i]][-1])
+            print self.cut_word[self.rdd_raw_message_name_list[i]][-1]
+
+            print "length of cut word  length set : ", len(self.cut_word_count[self.rdd_raw_message_name_list[i]][-1])
+            print self.cut_word_count[self.rdd_raw_message_name_list[i]][-1]
+
 
 ####################################### Part3 :Test ####################################################################
 
@@ -118,13 +154,11 @@ for i in xrange(len(key_list)):
     print "length of rdd_raw_message_list :", len(temp_list_2)
     print "head of list:"
     for k in temp_list_2[0:5]:
-        for q in k:
-            print q
+        print k
     print "****************************"
     print "elem of tail list:"
     for k in temp_list_2[-1:-6:-1]:
-        for q in k:
-            print q
+        print k
     print "****************************"
 
 # [test get cut words length of message function]
@@ -138,4 +172,7 @@ for i in xrange(len(key_list)):
     for k in temp_list_3[-1:-6:-1]:
         print k
     print "****************************"
+
+testObject.getRecordSQL()
+
 testObject.stop()
