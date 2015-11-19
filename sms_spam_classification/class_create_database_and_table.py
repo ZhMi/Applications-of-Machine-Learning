@@ -33,6 +33,7 @@ class createDatabaseTable(object):
             logging.info("start to connect the mysql")
             self.conn = MySQLdb.connect(host='localhost',user='root',passwd='95120',charset='utf8', port=3306)
             logging.info("connect successfully.")
+            return self.conn
         except Exception,ex:
             logging.info("fail to connect mysql")
         finally:
