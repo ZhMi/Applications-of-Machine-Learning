@@ -16,7 +16,8 @@
 
 import logging
 import MySQLdb
-from class_config_logging import packageLogging
+from   class_config_logging import packageLogging
+import config_variables
 
 ####################################### Part3 : Create database and table  #############################################
 
@@ -62,6 +63,7 @@ class createDatabaseTable(object):
                                         id INT(11) NOT NULL,
                                         is_train INT(11),
                                         true_label INT(11),
+                                        message_length INT(11),
                                         predicted_label INT(11),
                                         is_spam_prob FLOAT,
                                         word_num INT(11),
@@ -116,12 +118,12 @@ class createDatabaseTable(object):
 
 ####################################### Part4 : Test  ##################################################################
 
-name = "sms_spam_classification_DB"
-table_list = ['message_data_information','word_infomation']
+database_name = config_variables.data_base_name
+table_name_list = config_variables.table_name_list
 Creater = createDatabaseTable()
 Creater.connectMysql()
-Creater.createDatebase(database_name = name)
-Creater.createTable(database_name = name, table_name_list = table_list)
+Creater.createDatebase(database_name = database_name)
+Creater.createTable(database_name = database_name, table_name_list = table_name_list)
 Creater.close_database()
 
 
