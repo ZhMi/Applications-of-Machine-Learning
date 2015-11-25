@@ -33,9 +33,9 @@ class filterDataFun(object):
 
     def readFile(self):
         self.sc = SparkContext("local", "test")
-        rdd_raw_File = self.sc\
-                            .textFile(self.data_file_dir) \
-                            .map(lambda x: x.strip())
+        rdd_raw_File = self.sc \
+                           .textFile(self.data_file_dir) \
+                           .map(lambda x: x.strip())
         return rdd_raw_File
 
     def filterData(self, rdd_raw_File):
@@ -52,6 +52,26 @@ class filterDataFun(object):
                                                    .map(lambda x: [x[-2][-2], "///".join(x[-2][-1]), x[-1]])
         return rdd_cut_word_count_data
 
+    def recordSQL(self, rdd_cut_word_count_data):
+        filter_data_list = rdd_cut_word_count_data \
+                          .collect()
+        map(lambda x: [x[0][0].append(x[0][1]), x[0][0].append(x[-2]), x[0][0].append(x[-1])],  filter_data_list)
+        filter_data_list = map(lambda x: x[0][0], filter_data_list)
+        return filter_data_list
+
+
+    def InsertFun(self, value):
+        self.cursor.execute('insert into spam_classification_DB.message_data_information(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
+        # table_name = config_variables.data_base_name + "." + config_variables.table_name_list[0]
+        # self.cursor.execute('insert %s(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
+        self.conn.commit()
+
+    def InsertData(self, record_sql_list):
+        class_db_connect = createDatabaseTable()
+        self.conn = class_db_connect.connectMysql()
+        self.cursor = self.conn.cursor()
+        map(self.InsertFun, record_sql_list)
+        self.conn.close()
 
     def stopSpark(self):
         self.sc.stop()
@@ -70,13 +90,12 @@ rdd_raw_file = testObject.readFile()
 rdd_filter_data = testObject.filterData(rdd_raw_file)
 rdd_cut_word_data = testObject.cutWord(rdd_filter_data)
 rdd_cut_word_count_data = testObject.cutWordCount(rdd_cut_word_data)
+record_sql_list = testObject.recordSQL(rdd_cut_word_count_data)
+testObject.InsertData(record_sql_list)
 
-filter_list = rdd_cut_word_count_data.collect()
-
-# filter_list = rdd_cut_word_count_data.collect()
 testObject.stopSpark()
 
-for i in filter_list:
+for i in record_sql_list:
     print "******", i
 
 finish_time = time.strftime("%H:%M:%S")
