@@ -59,19 +59,35 @@ class filterDataFun(object):
         filter_data_list = map(lambda x: x[0][0], filter_data_list)
         return filter_data_list
 
+    def connectDatabase(self):
+        class_db_connect = createDatabaseTable()
+        self.conn = class_db_connect.connectMysql()
+        self.cursor = self.conn.cursor()
 
-    def InsertFun(self, value):
+    def InsertMessageTable(self, value):
         self.cursor.execute('insert into spam_classification_DB.message_data_information(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
         # table_name = config_variables.data_base_name + "." + config_variables.table_name_list[0]
         # self.cursor.execute('insert %s(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
         self.conn.commit()
 
+    def getWordList(self, filter_data_list):
+        word_list = map(lambda x: x[-2].split("///"), filter_data_list)
+        word_list = sum(word_list, [])
+        rdd_word_data = self.sc \
+                            .parallelize(word_list) \
+                            .map(lambda x: (x, 1))  \
+                            .countByKey().items()
+
+        word_list = rdd_word_data
+        return word_list
+
+
     def InsertData(self, record_sql_list):
-        class_db_connect = createDatabaseTable()
-        self.conn = class_db_connect.connectMysql()
-        self.cursor = self.conn.cursor()
-        map(self.InsertFun, record_sql_list)
+        map(self.InsertMessageTable, record_sql_list)
+
+    def closeDatabase(self):
         self.conn.close()
+
 
     def stopSpark(self):
         self.sc.stop()
@@ -91,11 +107,18 @@ rdd_filter_data = testObject.filterData(rdd_raw_file)
 rdd_cut_word_data = testObject.cutWord(rdd_filter_data)
 rdd_cut_word_count_data = testObject.cutWordCount(rdd_cut_word_data)
 record_sql_list = testObject.recordSQL(rdd_cut_word_count_data)
-testObject.InsertData(record_sql_list)
 
+testObject.connectDatabase()
+
+# testObject.InsertData(record_sql_list)
+
+
+word_list = testObject.getWordList(record_sql_list)
+
+testObject.closeDatabase()
 testObject.stopSpark()
 
-for i in record_sql_list:
+for i in word_list:
     print "******", i
 
 finish_time = time.strftime("%H:%M:%S")
