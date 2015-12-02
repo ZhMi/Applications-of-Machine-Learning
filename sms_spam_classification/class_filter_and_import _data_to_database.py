@@ -66,8 +66,6 @@ class filterDataFun(object):
 
     def InsertMessageTable(self, value):
         self.cursor.execute('insert into spam_classification_DB.message_data_information(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
-        # table_name = config_variables.data_base_name + "." + config_variables.table_name_list[0]
-        # self.cursor.execute('insert %s(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
         self.conn.commit()
 
     def getWordList(self, filter_data_list):
@@ -81,13 +79,18 @@ class filterDataFun(object):
         word_list = rdd_word_data
         return word_list
 
-
     def InsertData(self, record_sql_list):
         map(self.InsertMessageTable, record_sql_list)
 
+    def GetClassMessageRecord(self, is_spam, record_sql_list):
+        if is_spam == 1:
+            class_spam_message_record = filter(lambda x: x[1] != u'0', record_sql_list)
+        else:
+            class_spam_message_record = filter(lambda x: x[1] != u'1', record_sql_list)
+        return class_spam_message_record
+
     def closeDatabase(self):
         self.conn.close()
-
 
     def stopSpark(self):
         self.sc.stop()
@@ -113,13 +116,18 @@ testObject.connectDatabase()
 # testObject.InsertData(record_sql_list)
 
 
-word_list = testObject.getWordList(record_sql_list)
+# word_list = testObject.getWordList(record_sql_list)
+is_spam_list = testObject.GetClassMessageRecord(1, record_sql_list)
+is_not_spam_list = testObject.GetClassMessageRecord(0, record_sql_list)
 
 testObject.closeDatabase()
 testObject.stopSpark()
 
-for i in word_list:
+for i in is_spam_list:
     print "******", i
+
+for j in is_not_spam_list:
+    print "######", j
 
 finish_time = time.strftime("%H:%M:%S")
 print "start  time:", start_time
