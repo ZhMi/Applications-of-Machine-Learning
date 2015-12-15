@@ -20,7 +20,7 @@ from class_create_database_and_table import createDatabaseTable
 import time
 import config_variables
 
-####################################### Part2 : filter raw data ########################################################
+####################################### Part2 : Filter raw data ########################################################
 
 class filterDataFun(object):
 
@@ -68,44 +68,14 @@ class filterDataFun(object):
         self.cursor.execute('insert into spam_classification_DB.message_data_information(id, is_train, true_label, content, message_length, split_result_string, split_result_num) values(%s,1,%s,%s,%s,%s,%s);', value)
         self.conn.commit()
 
-    def getWordList(self, filter_data_list):
-        word_list = map(lambda x: x[-2].split("///"), filter_data_list)
-        word_list = sum(word_list, [])
-        rdd_word_data = self.sc \
-                            .parallelize(word_list) \
-                            .map(lambda x: (x, 1))  \
-                            .countByKey().items()
-
-        word_list = rdd_word_data
-        return word_list
-
     def InsertData(self, record_sql_list):
         map(self.InsertMessageTable, record_sql_list)
-
-    def GetClassMessageRecord(self, is_spam, record_sql_list):
-        if is_spam == 1:
-            class_spam_message_record = filter(lambda x: x[1] != u'0', record_sql_list)
-        else:
-            class_spam_message_record = filter(lambda x: x[1] != u'1', record_sql_list)
-        return class_spam_message_record
-
-    def wordNumCount(self, class_messgae_list):
-
-        word_list = map(lambda x: x[-2].split("///"), class_messgae_list)
-        word_list = sum(word_list, [])
-        rdd_word_data = self.sc \
-                            .parallelize(word_list) \
-                            .map(lambda x: (x, 1))  \
-                            .countByKey().items()
-        word_list = rdd_word_data
-        return word_list
 
     def closeDatabase(self):
         self.conn.close()
 
     def stopSpark(self):
         self.sc.stop()
-
 
 ####################################### Part3 :Test ###################################################################time.strftime("%H:%M:%S"))
 
@@ -123,25 +93,10 @@ rdd_cut_word_count_data = testObject.cutWordCount(rdd_cut_word_data)
 record_sql_list = testObject.recordSQL(rdd_cut_word_count_data)
 
 testObject.connectDatabase()
-
-# testObject.InsertData(record_sql_list)
-
-
-# word_list = testObject.getWordList(record_sql_list)
-is_spam_list = testObject.GetClassMessageRecord(1, record_sql_list)
-is_not_spam_list = testObject.GetClassMessageRecord(0, record_sql_list)
-
-is_spam_word_count_list = testObject.wordNumCount(is_spam_list)
-is_not_spam_word_count_list = testObject.wordNumCount(is_not_spam_list)
+testObject.InsertData(record_sql_list)
 
 testObject.closeDatabase()
 testObject.stopSpark()
-
-for i in is_spam_word_count_list:
-    print "******", i
-
-for j in is_not_spam_word_count_list:
-    print "######", j
 
 finish_time = time.strftime("%H:%M:%S")
 print "start  time:", start_time
