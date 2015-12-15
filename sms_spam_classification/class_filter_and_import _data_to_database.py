@@ -20,7 +20,7 @@ from class_create_database_and_table import createDatabaseTable
 import time
 import config_variables
 
-####################################### Part2 : filter raw data ########################################################
+####################################### Part2 : Filter raw data ########################################################
 
 class filterDataFun(object):
 
@@ -77,7 +77,6 @@ class filterDataFun(object):
     def stopSpark(self):
         self.sc.stop()
 
-
 ####################################### Part3 :Test ###################################################################time.strftime("%H:%M:%S"))
 
 start_time = time.strftime("%H:%M:%S")
@@ -94,7 +93,6 @@ rdd_cut_word_count_data = testObject.cutWordCount(rdd_cut_word_data)
 record_sql_list = testObject.recordSQL(rdd_cut_word_count_data)
 
 testObject.connectDatabase()
-
 testObject.InsertData(record_sql_list)
 
 testObject.closeDatabase()
