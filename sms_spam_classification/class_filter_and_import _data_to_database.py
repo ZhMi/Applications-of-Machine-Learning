@@ -89,6 +89,17 @@ class filterDataFun(object):
             class_spam_message_record = filter(lambda x: x[1] != u'1', record_sql_list)
         return class_spam_message_record
 
+    def wordNumCount(self, class_messgae_list):
+
+        word_list = map(lambda x: x[-2].split("///"), class_messgae_list)
+        word_list = sum(word_list, [])
+        rdd_word_data = self.sc \
+                            .parallelize(word_list) \
+                            .map(lambda x: (x, 1))  \
+                            .countByKey().items()
+        word_list = rdd_word_data
+        return word_list
+
     def closeDatabase(self):
         self.conn.close()
 
@@ -120,13 +131,16 @@ testObject.connectDatabase()
 is_spam_list = testObject.GetClassMessageRecord(1, record_sql_list)
 is_not_spam_list = testObject.GetClassMessageRecord(0, record_sql_list)
 
+is_spam_word_count_list = testObject.wordNumCount(is_spam_list)
+is_not_spam_word_count_list = testObject.wordNumCount(is_not_spam_list)
+
 testObject.closeDatabase()
 testObject.stopSpark()
 
-for i in is_spam_list:
+for i in is_spam_word_count_list:
     print "******", i
 
-for j in is_not_spam_list:
+for j in is_not_spam_word_count_list:
     print "######", j
 
 finish_time = time.strftime("%H:%M:%S")
