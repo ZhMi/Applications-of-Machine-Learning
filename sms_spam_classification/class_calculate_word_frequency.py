@@ -23,7 +23,7 @@ class calculateWordFrquency(object):
         self.cursor.execute(sqls[0])
         self.conn.commit()
         split_result_list = self.cursor.fetchall()
-        split_result_list = map(lambda x: [x[0], x[1], x[-1].split("///")], split_result_list)
+        split_result_list = map(lambda x: [x[0], x[1], x[-1].encode('utf-8').split("///")], split_result_list)
         return split_result_list
 
     def getClassWord(self, in_spam, split_result_list):
@@ -50,9 +50,29 @@ class calculateWordFrquency(object):
     def combineWordFrequency(self, word_in_spam_rdd, word_in_normal_rdd):
         word_frequency = word_in_spam_rdd \
                         .union(word_in_normal_rdd) \
-                        .groupByKey().mapValues(list)
+                        .groupByKey().mapValues(list) \
+                        .filter(lambda x: x[0]!=" ")
+
         return word_frequency
 
+    def InsertSingleRecord(self, value):
+        print "$$$$ value: ", value
+
+        sqls = ["""INSERT INTO {database_name}.{word_table_name}(word, true_pos_num, true_neg_num) \
+                 VALUES("{word}", {true_pos_num}, {true_neg_num})""" \
+                 .format \
+                 (
+                  database_name = config_variables.data_base_name,
+                  word_table_name = config_variables.table_name_list[1],
+                  word = value[0],
+                  true_pos_num = value[1][0],
+                  true_neg_num = value[1][1]
+                  )]
+        self.cursor.execute(sqls[0])
+        self.conn.commit()
+
+    def InsertTotalData(self, record_sql_list):
+        map(self.InsertSingleRecord, record_sql_list)
 
     def closeDatabase(self):
         self.conn.close()
@@ -85,15 +105,11 @@ word_frequency = TestObject \
                 .collect()
 
 
+TestObject.InsertTotalData(word_frequency)
+
 for i in word_frequency:
     print "**********", i
 
 TestObject.closeDatabase()
 TestObject.stopSpark()
 
-'''
- x = sc.parallelize([("a", 1), ("b", 4)])
->>> y = sc.parallelize([("a", 2), ("c", 8)])
->>> sorted(x.fullOuterJoin(y).collect())
-[('a', (1, 2)), ('b', (4, None)), ('c', (None, 8))]
-'''
