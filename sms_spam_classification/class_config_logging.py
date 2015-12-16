@@ -35,3 +35,4 @@ class packageLogging(object):
         formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
         console.setFormatter(formatter)  # 将定义好的console日志handler添加到root logger
         logging.getLogger('').addHandler(console)
+
