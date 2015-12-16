@@ -33,9 +33,26 @@ class calculateWordFrquency(object):
         word_class_rdd = pure_word_class_rdd.map(lambda x: (x, 1))
         return word_class_rdd
 
-    def wordFrequencyCount(self, word_class_rdd):
-        word_class_rdd = word_class_rdd.reduceByKey(add)
+    def getTotalWord(self, split_result_list):
+        total_word_list = sum(map(lambda x: x[-1], split_result_list), [])
+        total_word_rdd = self.sc \
+                             .parallelize(total_word_list) \
+                             .map(lambda x: (x, 0))
+        return total_word_rdd
+
+    def wordFrequencyCount(self, word_class_rdd, total_word_rdd):
+        word_class_rdd = word_class_rdd \
+                        .reduceByKey(add) \
+                        .union(total_word_rdd) \
+                        .reduceByKey(add)
         return word_class_rdd
+
+    def combineWordFrequency(self, word_in_spam_rdd, word_in_normal_rdd):
+        word_frequency = word_in_spam_rdd \
+                        .union(word_in_normal_rdd) \
+                        .groupByKey().mapValues(list)
+        return word_frequency
+
 
     def closeDatabase(self):
         self.conn.close()
@@ -52,20 +69,24 @@ TestObject = calculateWordFrquency()
 TestObject.connectDatabase()
 split_result_list = TestObject.exportData(database_name, word_table_name)
 
+total_word_rdd = TestObject.getTotalWord(split_result_list)
+
 word_in_spam_rdd = TestObject.getClassWord(1, split_result_list)
 word_in_normal_message_rdd = TestObject.getClassWord(0, split_result_list)
 
-word_in_spam_frequency_count = TestObject.wordFrequencyCount(word_in_spam_rdd).collect()
-word_in_normal_message_frequency_count = TestObject \
-                                         .wordFrequencyCount(word_in_normal_message_rdd) \
-                                         .collect()
+word_in_spam_frequency = TestObject.wordFrequencyCount(word_in_spam_rdd, total_word_rdd)
+word_in_normal_message_frequency = TestObject \
+                                  .wordFrequencyCount \
+                                   (word_in_normal_message_rdd, total_word_rdd)
 
-for i in word_in_spam_frequency_count:
+
+word_frequency = TestObject \
+                .combineWordFrequency(word_in_spam_frequency, word_in_normal_message_frequency) \
+                .collect()
+
+
+for i in word_frequency:
     print "**********", i
-
-for i in word_in_normal_message_frequency_count:
-    print "##########", i
-
 
 TestObject.closeDatabase()
 TestObject.stopSpark()
