@@ -43,20 +43,6 @@ class calculateWordFrquency(object):
     def stopSpark(self):
         self.sc.stop()
 
-
-    '''
-    def getWordList(self, filter_data_list):
-        word_list = map(lambda x: x[-2].split("///"), filter_data_list)
-        word_list = sum(word_list, [])
-        rdd_word_data = self.sc \
-                            .parallelize(word_list) \
-                            .map(lambda x: (x, 1))  \
-                            .countByKey().items()
-
-        word_list = rdd_word_data
-        return word_list
-    '''
-
 #############################################Part 2 : Test   ###########################################################
 
 database_name = config_variables.data_base_name
