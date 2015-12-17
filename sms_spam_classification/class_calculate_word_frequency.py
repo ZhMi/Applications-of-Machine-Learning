@@ -1,10 +1,12 @@
 
 #############################################Part 0 : Import  ##########################################################
 
+from __future__ import division
 from pyspark import SparkContext
 import config_variables
 from class_create_database_and_table import createDatabaseTable
 from operator import add
+
 
 #############################################Part 1 : Class  ###########################################################
 
@@ -58,15 +60,16 @@ class calculateWordFrquency(object):
     def InsertSingleRecord(self, value):
         print "$$$$ value: ", value
 
-        sqls = ["""INSERT INTO {database_name}.{word_table_name}(word, true_pos_num, true_neg_num) \
-                 VALUES("{word}", {true_pos_num}, {true_neg_num})""" \
+        sqls = ["""INSERT INTO {database_name}.{word_table_name}(word, true_pos_num, true_neg_num, true_neg_pro) \
+                 VALUES("{word}", {true_pos_num}, {true_neg_num}, {true_neg_pro})""" \
                  .format \
                  (
                   database_name = config_variables.data_base_name,
                   word_table_name = config_variables.table_name_list[1],
                   word = value[0],
                   true_pos_num = value[1][0],
-                  true_neg_num = value[1][1]
+                  true_neg_num = value[1][1],
+                  true_neg_pro = value[1][1]/(value[1][0] + value[1][1])
                   )]
         self.cursor.execute(sqls[0])
         self.conn.commit()
