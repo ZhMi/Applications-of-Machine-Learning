@@ -8,7 +8,7 @@
 #                  create table sms_spam_information_table
 #                  database sms_spam_classification_DB stores the raw data
 # Author:          zhmi
-# E-mail:          zhmi120@sina.com
+# E-mail:          
 # Create:          2015-11-3
 # Recent-changes:  2015-11-7
 
