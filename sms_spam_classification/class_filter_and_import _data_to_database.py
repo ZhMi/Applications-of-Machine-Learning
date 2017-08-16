@@ -6,7 +6,7 @@
 # Filename:        filter_and_import_data_to_database.py
 # Description:     filter the raw data and import the separated data to the fields of tables in the database
 # Author:          zhmi
-# E-mail:          zhmi120@sina.com
+# E-mail:         
 # Create:          2015-11-6
 # Recent-changes:
 
