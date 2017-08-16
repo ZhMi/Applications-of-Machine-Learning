@@ -9,7 +9,7 @@
 #                         write log information to file "main.log"
 #
 # Author:          zhmi
-# E-mail:          zhmi120@sina.com
+# E-mail:          
 # Create:          2015-11-6
 # Recent-changes:  2015-11-7
 
